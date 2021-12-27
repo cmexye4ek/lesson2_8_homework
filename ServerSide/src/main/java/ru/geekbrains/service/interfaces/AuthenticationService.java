@@ -5,4 +5,3 @@ public interface AuthenticationService {
     void stop();
     String getNickNameByLoginAndPassword (String login, String password);
 }
-
