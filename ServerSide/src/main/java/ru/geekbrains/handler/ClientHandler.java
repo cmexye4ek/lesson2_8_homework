@@ -1,11 +1,14 @@
 package ru.geekbrains.handler;
 
 import ru.geekbrains.service.MyServer;
+import ru.geekbrains.service.AuthTimer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Random;
+import java.util.Timer;
 
 public class ClientHandler {
 
@@ -13,8 +16,14 @@ public class ClientHandler {
     private Socket socket;
     private DataInputStream dis;
     private DataOutputStream dos;
+    private AuthTimer authTimer;
+
 
     private String nickName;
+    Random random = new Random();
+    private Integer connectionToken = random.nextInt(1000000); // for testing purposes
+    private boolean authFlag = false;
+
 
     public ClientHandler(MyServer myServer, Socket socket) {
         try {
@@ -40,40 +49,34 @@ public class ClientHandler {
 
 
     public void authentication() throws Exception {
+        System.out.println("Client " + connectionToken.toString() + " connected to server");
+        authTimer = new AuthTimer(this);
+        Timer timer = new Timer();
+        timer.schedule(authTimer, 10000);
         while (true) {
 
-
             String message = dis.readUTF();
+
             if (message.startsWith("/login")) {
-                String[] arr = message.split("-", 3);
-                if (arr.length != 3) {
-                    throw new IllegalAccessException();
-                }
-                final String nick = myServer.getAuthenticationService().getNickNameByLoginAndPassword(arr[1].trim(), arr[2].trim());
+                String login = message.split("-", 3)[1];
+                String password = message.split("-", 3)[2];
+                final String nick = myServer.getAuthenticationService().getNickNameByLoginAndPassword(login.trim(), password.trim());
                 if (nick != null) {
                     if (!myServer.nickIsBusy(nick)) {
-                        sendMessage("/login" + nick);
+                        sendMessage("/successLogin" + nick);
                         this.nickName = nick;
                         myServer.sendMessageToClients(nickName + " connected to chat");
-                        System.out.println("Client " + nickName + " logged in");
+                        System.out.println("Client " + connectionToken.toString() + " logged in as " + nickName);
                         myServer.subscribe(this);
+                        authFlag = true;
                         return;
                     } else {
-                        sendMessage("Your " + nick + " is busy now");
+                        sendMessage("/error1" + nick); //nick is busy
                     }
                 } else {
-                    sendMessage("Wrong login or password");
+                    sendMessage("/error2"); //wrong login or password
                 }
             }
-
-        }
-    }
-
-    public void sendMessage(String message) {
-        try {
-            dos.writeUTF(message);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -84,29 +87,41 @@ public class ClientHandler {
             if (message.startsWith("/")) {
                 if (message.startsWith("/logout")) {
                     myServer.sendMessageToClients(nickName + " exit from chat");
-                    System.out.println("Client " + nickName + " logged out");
-//                    closeConnection();
+                    if (nickName != null) {
+                        System.out.println("Client " + nickName + " logged out");
+                    }
+                    sendMessage("/logout");
                     return;
                 }
+
                 if (message.startsWith("/w")) {
                     String to = message.split("-", 3)[1];
                     String msg = message.split("-", 3)[2];
                     myServer.sendWhisperMessage(this, to, msg);
-
-
                 }
+
                 if (message.startsWith("/online")) {
                     myServer.getOnlineUsers(this);
                 }
                 continue;
             }
-                myServer.sendMessageToClients(nickName + ": " + message);
 
+            myServer.sendMessageToClients(nickName + ": " + message);
+
+        }
+
+    }
+
+    public void sendMessage(String message) {
+        try {
+            dos.writeUTF(message);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
 
-    private void closeConnection() {
+    public void closeConnection() {
         myServer.unSubscribe(this);
         try {
             dis.close();
@@ -129,5 +144,12 @@ public class ClientHandler {
         return nickName;
     }
 
+    public Integer getConnectionToken() {
+        return connectionToken;
+    }
+
+    public boolean getAuthorized() {
+        return authFlag;
+    }
 
 }

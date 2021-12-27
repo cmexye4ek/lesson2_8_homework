@@ -14,70 +14,90 @@ public class MyChatClient extends JFrame {
     private final int SERVER_PORT = 8880;
     private String nickName;
 
+
     private JTextField msgInputField;
     private JTextArea chatArea;
     private JTextField loginInputField;
     private JTextField passInputField;
+    private JLabel serviceMsgTip;
+    private JPanel loginPanel;
+    private JPanel bottomPanel;
+    private JButton btnLogin;
+
 
     private Socket socket;
     private DataInputStream dis;
     private DataOutputStream dos;
-    private boolean loginWindowFlag;
+    private boolean authenticated = false;
 
 
     public MyChatClient() {
         prepareGUI();
-        try {
-            openConnection();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Server connection error");
-            msgInputField.setEditable(false);
-            msgInputField.setText("You cant send message, connection is lost");
-
-        }
-
+        connection();
     }
 
-    public void openConnection() throws Exception {
-        socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-        dis = new DataInputStream(socket.getInputStream());
-        dos = new DataOutputStream(socket.getOutputStream());
-        Thread thread = new Thread(() -> {
-            try {
-                chatArea.append("Connection to server established" + "\n");
-                while (true) {
+    public void connection() {
+        try {
+            socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            dis = new DataInputStream(socket.getInputStream());
+            dos = new DataOutputStream(socket.getOutputStream());
+            serviceMsgTip.setText("Connection to server established, please login");
+            new Thread(() -> {
+                try {
+                    while (true) {
 
-                    String message = dis.readUTF();
 
-                    if (message.startsWith("/login")) {
-                        nickName = message.substring(6);
-                        chatArea.append("You have been successfully logging in as: " + nickName + "\n");
-                        break;
+                        String message = dis.readUTF();
+                        if (message.startsWith("/")) {
+                            if (message.startsWith("/successLogin")) {
+                                nickName = message.substring(13);
+                                chatArea.append("You have been successfully logging in as: " + nickName + "\n");
+                                authenticated = true;
+                                loginWindowSwitch(authenticated);
+
+                            }
+
+                            if (message.startsWith("/authTimeOut")) {
+                                serviceMsgTip.setText("Authentication timeout");
+                                return;
+
+                            }
+
+                            if (message.startsWith("/error1")) {
+                                nickName = message.substring(7);
+                                serviceMsgTip.setText("Your nickname " + nickName + " is busy now");
+
+                            }
+
+                            if (message.startsWith("/error2")) {
+                                serviceMsgTip.setText("Wrong login or password");
+
+                            }
+
+                            if (message.startsWith("/logout")) {
+//                                chatArea.append("\n" + " You have been disconnected from server ");
+//                                msgInputField.setEditable(false);
+//                                msgInputField.setText("You cant send message, connection is closed");
+                                authenticated = false;
+                                loginWindowSwitch(authenticated);
+                                return;
+                            }
+                        } else {
+                            chatArea.append(message + "\n");
+                        }
                     }
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    closeConnection();
                 }
-
-                while (true) {
-                    String message = dis.readUTF();
-                    if (message.startsWith("/logout")) {
-                        chatArea.append("\n" + " You have been disconnected from server ");
-                        msgInputField.setEditable(false);
-                        msgInputField.setText("You cant send message, connection is closed");
-                        closeConnection();
-                        break;
-                    }
-
-                    chatArea.append(message + "\n");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
-
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+            serviceMsgTip.setText("Connection to server lost");
+        }
     }
 
     public void closeConnection() {
@@ -98,20 +118,29 @@ public class MyChatClient extends JFrame {
         }
     }
 
-    public void sendMessageToServer() {
+    public void loginButtonClick() {
+
+        if (socket == null || socket.isClosed()) {
+            connection();
+        }
         if (!loginInputField.getText().trim().isEmpty() && loginInputField != null && !passInputField.getText().trim().isEmpty() && passInputField != null) {
             String credentials = "/login-" + loginInputField.getText() + "-" + passInputField.getText();
             try {
                 dos.writeUTF(credentials);
-                loginWindowFlag = true; //эта проверка должна быть не здесь но разобраться как её вкорячить в поток проверки логина я не успел
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             loginInputField.setText("");
             passInputField.setText("");
+            loginInputField.grabFocus();
 
         }
+
+    }
+
+    public void sendMessageToServer() {
+
         if (!msgInputField.getText().trim().isEmpty() && msgInputField != null) {
             try {
                 dos.writeUTF(msgInputField.getText());
@@ -131,7 +160,6 @@ public class MyChatClient extends JFrame {
 
     public void prepareGUI() {
 
-
         setBounds(600, 300, 500, 500);
         setTitle("Client");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -140,9 +168,9 @@ public class MyChatClient extends JFrame {
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
+//        add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
         JButton btnSendMsg = new JButton("Send");
         bottomPanel.add(btnSendMsg, BorderLayout.EAST);
         msgInputField = new JTextField();
@@ -164,42 +192,45 @@ public class MyChatClient extends JFrame {
 
         bottomPanel.setVisible(false);
 
-
-        JPanel loginPanel = new JPanel(new BorderLayout());
-        JPanel loginPanel2 = new JPanel(new GridLayout());
+        loginPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints constraints = new GridBagConstraints();
         JLabel loginTip = new JLabel("Login:");
         JLabel passwordTip = new JLabel("Password:");
+        serviceMsgTip = new JLabel();
         loginInputField = new JTextField();
         passInputField = new JTextField();
-        JButton btnLogin = new JButton("Login");
+        btnLogin = new JButton("Login");
         add(loginPanel, BorderLayout.CENTER);
-        GridLayout layout = new GridLayout(3, 2, 1, 1);
-        loginPanel2.setLayout(layout);
-        loginPanel.add(loginPanel2);
-        loginPanel2.add(loginTip);
-        loginPanel2.add(loginInputField);
-        loginPanel2.add(passwordTip);
-        loginPanel2.add(passInputField);
-        loginPanel2.add(btnLogin);
+        constraints.gridx = 1;
+        constraints.gridy = 1;
+        loginPanel.add(loginTip, constraints);
+        constraints.ipadx = 100;
+        constraints.gridy = 2;
+        loginPanel.add(loginInputField, constraints);
+        constraints.gridy = 3;
+        constraints.ipadx = 0;
+        loginPanel.add(passwordTip, constraints);
+        constraints.gridy = 4;
+        constraints.ipadx = 100;
+        loginPanel.add(passInputField, constraints);
+        constraints.gridy = 5;
+        constraints.ipadx = 0;
+        loginPanel.add(btnLogin, constraints);
+        constraints.gridy = 6;
+        loginPanel.add(serviceMsgTip, constraints);
+
         btnLogin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    sendMessageToServer();
+                    loginButtonClick();
 
                 } catch (Exception exc) {
                     exc.printStackTrace();
                 }
-                if (loginWindowFlag) {
-                    loginPanel.setVisible(false);
-                    loginPanel2.setVisible(false);
-                    bottomPanel.setVisible(true);
-                    add(new JScrollPane(chatArea), BorderLayout.CENTER);
-                }
 
             }
-
         });
 
 
@@ -207,20 +238,40 @@ public class MyChatClient extends JFrame {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
                 super.windowClosing(windowEvent);
-                if (dos != null) {
-                    try {
-                        dos.writeUTF("/logout");
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                if (socket != null) {
+                    if (!socket.isClosed()) {
+                        try {
+                            dos.writeUTF("/logout");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
         });
 
-
         setVisible(true);
 
+    }
+
+    public void loginWindowSwitch(Boolean authenticated) {                  //метод для переключения окна логина
+        if (authenticated) {
+            loginPanel.setVisible(false);
+            add(new JScrollPane(chatArea), BorderLayout.CENTER);
+            chatArea.setVisible(true);
+            bottomPanel.setVisible(true);
+        } else {
+            /*
+            Здесь есть проблема с отрисовкой chatArea после повторного логина, отправка любого сообщения отрисовывает панель нормально.
+            Переделать создание окна в несколько методов, чтобы работало.
+             */
+            chatArea.setText(null);
+            chatArea.setVisible(false);
+            bottomPanel.setVisible(false);
+            loginPanel.setVisible(true);
+        }
 
     }
+
 }
 

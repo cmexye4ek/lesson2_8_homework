@@ -25,8 +25,8 @@ public class MyServer {
             while (true) {
                 System.out.println("Server waiting connection");
                 Socket socket = serverSocket.accept();
-                System.out.println("Client connected");
                 new ClientHandler(this, socket);
+
             }
 
         } catch (Exception e) {
@@ -46,39 +46,22 @@ public class MyServer {
         handlerList.forEach(clientHandler -> {
             if (clientHandler.getNickName().equals(to)) {
                 clientHandler.sendMessage(from.getNickName() + " whisper you: " + message);
-                from.sendMessage(from.getNickName() + " whisper you: " + message);
+                from.sendMessage("You whisper to " + to + ": " + message);
                 return;
             }
 
         });
-        from.sendMessage("User with nick " + to + " is offline");
-    }
-
-    public synchronized void sendMessageToClients(String message) {
-        if (message.startsWith("/w")) {
-            List<ClientHandler> whisperList = new ArrayList<>();
-            String[] arr = message.split("-", 4);
-            handlerList.forEach(clientHandler -> {
-                if (clientHandler.getNickName().equalsIgnoreCase(arr[2]) || clientHandler.getNickName().equalsIgnoreCase(arr[1])) {
-                    whisperList.add(clientHandler);
-                }
-            });
-            whisperList.forEach(clientHandler -> {
-                if (clientHandler.getNickName().equalsIgnoreCase(arr[1])) {
-                    clientHandler.sendMessage("You whisper to " + arr[2] + ": " + arr[3]);
-                }
-                if (clientHandler.getNickName().equalsIgnoreCase(arr[2])) {
-                    clientHandler.sendMessage(arr[1] + " whisper to you: " + arr[3]);
-                }
-            });
-
-        } else {
-            handlerList.forEach(clientHandler -> clientHandler.sendMessage(message));
+        if (!nickIsBusy(to)) {
+            from.sendMessage("User with nick " + to + " is offline");
         }
     }
 
+    public synchronized void sendMessageToClients(String message) {
+        handlerList.forEach(clientHandler -> clientHandler.sendMessage(message));
+    }
+
     public synchronized void getOnlineUsers(ClientHandler clientHandler) {
-        String str = new String("Now online\n");
+        String str = new String("Now online:\n");
         for (ClientHandler ch : handlerList) {
             if (ch.getNickName().equals(clientHandler.getNickName())) {
                 continue;
