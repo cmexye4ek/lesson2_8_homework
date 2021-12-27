@@ -7,3 +7,4 @@ public class ServerApplication {
         new MyServer();
     }
 }
+

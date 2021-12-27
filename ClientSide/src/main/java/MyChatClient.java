@@ -168,7 +168,7 @@ public class MyChatClient extends JFrame {
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
-//        add(new JScrollPane(chatArea), BorderLayout.CENTER);
+
 
         bottomPanel = new JPanel(new BorderLayout());
         JButton btnSendMsg = new JButton("Send");
@@ -274,4 +274,5 @@ public class MyChatClient extends JFrame {
     }
 
 }
+
 
