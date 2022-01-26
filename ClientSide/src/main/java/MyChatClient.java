@@ -1,13 +1,15 @@
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MyChatClient extends JFrame {
     private final String SERVER_ADDRESS = "127.0.0.1";
@@ -83,6 +85,13 @@ public class MyChatClient extends JFrame {
                                 return;
                             }
                         } else {
+                            try (BufferedWriter bw = new BufferedWriter(new FileWriter(nickName + "_ChatHistory.txt", true))) {
+
+                                bw.write(message + "\n");
+
+                            } catch (IOException ignored) {
+
+                            }
                             chatArea.append(message + "\n");
                         }
                     }
@@ -168,6 +177,8 @@ public class MyChatClient extends JFrame {
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
+        DefaultCaret caret = (DefaultCaret)chatArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
 
 
         bottomPanel = new JPanel(new BorderLayout());
@@ -258,6 +269,7 @@ public class MyChatClient extends JFrame {
         if (authenticated) {
             loginPanel.setVisible(false);
             add(new JScrollPane(chatArea), BorderLayout.CENTER);
+            loadHistory();
             chatArea.setVisible(true);
             bottomPanel.setVisible(true);
         } else {
@@ -271,6 +283,26 @@ public class MyChatClient extends JFrame {
             loginPanel.setVisible(true);
         }
 
+    }
+
+    public void loadHistory() {
+        try (BufferedReader br = new BufferedReader(new FileReader(nickName + "_ChatHistory.txt"))) {
+            List<String> lines = new ArrayList<>();
+            String str;
+            while ((str = br.readLine()) != null) {
+                lines.add(str);
+                if (lines.size() > 100) {
+                    lines.remove(0);
+                }
+            }
+            String [] history = new String[100];    // трюк с массивом нужен только для красивого форматирования текста в окне чата. Так то можно и просто лист выводить.
+            lines.toArray(history);
+            for (int i = 0; i < history.length; i++) {
+                chatArea.append(history[i] + "\n");
+            }
+        } catch (IOException ignore) {
+
+        }
     }
 
 }

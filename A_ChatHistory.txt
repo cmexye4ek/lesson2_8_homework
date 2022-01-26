@@ -1,0 +1,148 @@
+A: hdhfghdfghdfgh
+A: fgdhdfghfgdhdfgh
+A: dfghfdghfdghfdgh
+A: fgdhdfghfdghfdghdfgh
+A: fdghfdghfdghdfgh
+A: fdghfdghdfghdfghdfgh
+A exit from chat
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A: hdhfghdfghdfgh
+A: fgdhdfghfgdhdfgh
+A: dfghfdghfdghfdgh
+A: fgdhdfghfdghfdghdfgh
+A: fdghfdghfdghdfgh
+A: fdghfdghdfghdfghdfgh
+A exit from chat
+
+dfjghdjkfg
+dfljghkjdfhg
+dfjghkjdfgA exit from chat
+A exit from chat
+A exit from chat
+A exit from chat
+A exit from chat
+A: test
+A exit from chat
+A exit from chat
+A exit from chat
+A exit from chat
+A exit from chat
+A has changed name to B
+B: test
+B has changed name to A
+A: test
+Desired nickname is busy now
+A exit from chat
+A exit from chat
+A has changed name to test
+test: test
+test has changed name to A
+A: test
+A exit from chat
+A has changed name to B
+B: test
+B has changed name to A
+A: test
+A exit from chat
+A has changed name to B
+B has changed name to A
+A exit from chat
+A: test
+A has changed name to B
+B has changed name to A
+A exit from chat
+A: test
+A has changed name to B
+B has changed name to A
+B connected to chat
+B: test
+B exit from chat
+A exit from chat
+A: test
+Now online:
+
+A exit from chat

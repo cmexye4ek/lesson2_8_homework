@@ -18,7 +18,8 @@ public class ClientHandler {
     private DataOutputStream dos;
     private AuthTimer authTimer;
 
-
+    private String login;
+    private String password;
     private String nickName;
     Random random = new Random();
     private Integer connectionToken = random.nextInt(1000000); // for testing purposes
@@ -58,8 +59,8 @@ public class ClientHandler {
             String message = dis.readUTF();
 
             if (message.startsWith("/login")) {
-                String login = message.split("-", 3)[1];
-                String password = message.split("-", 3)[2];
+                login = message.split("-", 3)[1];
+                password = message.split("-", 3)[2];
                 String nick = myServer.getAuthenticationService().authentication(login.trim(), password.trim());
                 if (nick != null) {
                     if (!myServer.nickIsBusy(nick)) {
@@ -153,6 +154,10 @@ public class ClientHandler {
 
     public String getNickName() {
         return nickName;
+    }
+
+    public String getLogin() {
+        return login;
     }
 
     public Integer getConnectionToken() {

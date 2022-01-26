@@ -35,48 +35,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public String authentication(String login, String password) throws SQLException {
-        ResultSet credentialsSet = statement.executeQuery("SELECT * FROM users");
-        while (credentialsSet.next()) {
-            if (credentialsSet.getString("Login").equals(login) && credentialsSet.getString("Password").equals(password)) {
-                return credentialsSet.getString("Nickname");
-            }
+        ResultSet credentialsSet = statement.executeQuery("SELECT * FROM users WHERE Login LIKE '" + login + "' AND Password LIKE '" + password + "'");
+        if (credentialsSet.next()) {
+            return credentialsSet.getString("Nickname");
+        } else {
+            return null;
         }
-        return null;
     }
 
-//    private void createTable() throws SQLException {
-//        statement.executeUpdate("CREATE TABLE IF NOT EXISTS Users (\n"
-//                + "id INTEGER PRIMARY KEY AUTOINCREMENT, \n"
-//                + "Login TEXT, \n"
-//                + "Password TEXT, \n"
-//                + "Nickname TEXT\n"
-//                + ")");
-//    }
-//
-//    private void insertData() throws SQLException {
-//        statement.executeUpdate("INSERT INTO users (Login, Password, Nickname)\n"
-//                + "VALUES ('A', 'A', 'A');");
-//        statement.executeUpdate("INSERT INTO users (Login, Password, Nickname)\n"
-//                + "VALUES ('B', 'B', 'B');");
-//        statement.executeUpdate("INSERT INTO users (Login, Password, Nickname)\n"
-//                + "VALUES ('C', 'C', 'C');");
-//    }
-
+    @Override
     public void changeNickName(ClientHandler from, String newNickName) throws SQLException {
-        preparedStatement = dbConnector.prepareStatement("UPDATE users SET Nickname = ? WHERE Nickname = ?;");
-        preparedStatement.setString(1, newNickName);
-        preparedStatement.setString(2, from.getNickName());
-        preparedStatement.addBatch();
-        preparedStatement.executeBatch();
-    }
-
-    public List<String> getNickNameList() throws SQLException {
-        List<String> nickList = new ArrayList<>();
-        ResultSet credentialsSet = statement.executeQuery("SELECT * FROM users");
-        while (credentialsSet.next()) {
-            nickList.add(credentialsSet.getString("Nickname"));
-        }
-        return nickList;
+        statement.executeUpdate("UPDATE users SET Nickname = '" + newNickName + "' WHERE Nickname LIKE '" + from.getNickName() + "' AND Login LIKE '"+ from.getLogin() +"';");
     }
 
     private void closeConnection() {
