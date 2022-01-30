@@ -9,11 +9,14 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Random;
 import java.util.Timer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
 
     private MyServer myServer;
     private Socket socket;
+    private ExecutorService executorService;
     private DataInputStream dis;
     private DataOutputStream dos;
     private AuthTimer authTimer;
@@ -26,13 +29,25 @@ public class ClientHandler {
     private boolean authFlag = false;
 
 
-    public ClientHandler(MyServer myServer, Socket socket) {
+    public ClientHandler(MyServer myServer, Socket socket, ExecutorService executorService) {
         try {
             this.myServer = myServer;
             this.socket = socket;
             this.dis = new DataInputStream(socket.getInputStream());
             this.dos = new DataOutputStream(socket.getOutputStream());
-            new Thread(() -> {
+            this.executorService = executorService;
+
+//            new Thread(() -> {
+//                try {
+//                    authentication();
+//                    receiveMessage();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                } finally {
+//                    closeConnection();
+//                }
+//            }).start();
+            executorService.execute(() -> {
                 try {
                     authentication();
                     receiveMessage();
@@ -41,8 +56,7 @@ public class ClientHandler {
                 } finally {
                     closeConnection();
                 }
-            }).start();
-
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

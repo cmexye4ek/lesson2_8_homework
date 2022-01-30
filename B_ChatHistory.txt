@@ -1,3 +1,9 @@
 B: test
 Desired nickname is busy now
 B exit from chat
+B: test
+B: test
+A exit from chat
+B exit from chat
+B exit from chat
+B exit from chat

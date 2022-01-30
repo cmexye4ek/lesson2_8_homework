@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class MyServer {
@@ -14,6 +16,7 @@ public class MyServer {
     private static final Integer PORT = 8880;
 
     private AuthenticationService authenticationService;
+    private ExecutorService executorService;
     private List<ClientHandler> handlerList;
 
     public MyServer() {
@@ -22,17 +25,18 @@ public class MyServer {
             authenticationService = new AuthenticationServiceImpl();
             authenticationService.start();
             handlerList = new ArrayList<>();
+            executorService = Executors.newFixedThreadPool(10);
             while (true) {
                 System.out.println("Server waiting connection");
                 Socket socket = serverSocket.accept();
-                new ClientHandler(this, socket);
-
+                new ClientHandler(this, socket, executorService);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             authenticationService.stop();
+            executorService.shutdown();
         }
     }
 
@@ -61,7 +65,7 @@ public class MyServer {
     }
 
     public synchronized void getOnlineUsers(ClientHandler clientHandler) {
-        String str = new String("Now online:\n");
+        String str = "Now online:\n";
         for (ClientHandler ch : handlerList) {
             if (ch.getNickName().equals(clientHandler.getNickName())) {
                 continue;
