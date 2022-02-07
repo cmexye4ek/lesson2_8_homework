@@ -7,3 +7,15 @@ A exit from chat
 B exit from chat
 B exit from chat
 B exit from chat
+C connected to chat
+B: test
+Now online:
+A
+C
+
+B: test
+B exit from chat
+B exit from chat
+A whisper you: test
+A exit from chat
+B exit from chat

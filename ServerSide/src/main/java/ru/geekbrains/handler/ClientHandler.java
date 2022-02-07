@@ -1,5 +1,7 @@
 package ru.geekbrains.handler;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.geekbrains.service.MyServer;
 import ru.geekbrains.service.AuthTimer;
 
@@ -10,7 +12,6 @@ import java.net.Socket;
 import java.util.Random;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ClientHandler {
 
@@ -20,7 +21,7 @@ public class ClientHandler {
     private DataInputStream dis;
     private DataOutputStream dos;
     private AuthTimer authTimer;
-
+    private static final Logger LOGGER = LogManager.getLogger(ClientHandler.class.getName());
     private String login;
     private String password;
     private String nickName;
@@ -36,35 +37,24 @@ public class ClientHandler {
             this.dis = new DataInputStream(socket.getInputStream());
             this.dos = new DataOutputStream(socket.getOutputStream());
             this.executorService = executorService;
-
-//            new Thread(() -> {
-//                try {
-//                    authentication();
-//                    receiveMessage();
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                } finally {
-//                    closeConnection();
-//                }
-//            }).start();
             executorService.execute(() -> {
                 try {
                     authentication();
                     receiveMessage();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("ClientHandler threads creation error", e);
                 } finally {
                     closeConnection();
                 }
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("ClientHandler creation  error(Server or IO streams)", e);
         }
     }
 
 
     public void authentication() throws Exception {
-        System.out.println("Client " + connectionToken.toString() + " connected to server");
+        LOGGER.info("Client " + connectionToken.toString() + " connected to server");
         authTimer = new AuthTimer(this);
         Timer timer = new Timer();
         timer.schedule(authTimer, 10000);
@@ -81,15 +71,17 @@ public class ClientHandler {
                         this.nickName = nick;
                         sendMessage("/successLogin" + nickName);
                         myServer.sendMessageToClients(nickName + " connected to chat");
-                        System.out.println("Client " + connectionToken.toString() + " logged in as " + nickName);
+                        LOGGER.info("Client " + connectionToken.toString() + " logged in as " + nickName);
                         myServer.subscribe(this);
                         authFlag = true;
                         return;
                     } else {
                         sendMessage("/error1" + nick); //nick is busy
+                        LOGGER.info("Client " + this.connectionToken + ", nick is busy");
                     }
                 } else {
                     sendMessage("/error2"); //wrong login or password
+                    LOGGER.info("Client " + this.connectionToken + ", wrong login or password");
                 }
             }
         }
@@ -103,7 +95,7 @@ public class ClientHandler {
                 if (message.startsWith("/logout")) {
                     myServer.sendMessageToClients(nickName + " exit from chat");
                     if (nickName != null) {
-                        System.out.println("Client " + nickName + " logged out");
+                        LOGGER.info("Client " + nickName + " logged out");
                     }
                     sendMessage("/logout");
                     return;
@@ -117,6 +109,7 @@ public class ClientHandler {
 
                 if (message.startsWith("/online")) {
                     myServer.getOnlineUsers(this);
+                    LOGGER.info("Client " + this.nickName + " send command: " + message);
                 }
 
                 if (message.startsWith("/changeNickname")) {
@@ -142,7 +135,7 @@ public class ClientHandler {
         try {
             dos.writeUTF(message);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("ClientHandler send message error", e);
         }
     }
 
@@ -152,17 +145,17 @@ public class ClientHandler {
         try {
             dis.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("ClientHandler error (dis closing)", e);
         }
         try {
             dos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("ClientHandler error (dos closing)", e);
         }
         try {
             socket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("ClientHandler error (socket closing)", e);
         }
     }
 

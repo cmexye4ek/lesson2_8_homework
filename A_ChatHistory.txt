@@ -165,3 +165,35 @@ B connected to chat
 B exit from chat
 A exit from chat
 A exit from chat
+B connected to chat
+C connected to chat
+B: test
+B: test
+B exit from chat
+C exit from chat
+A exit from chat
+B connected to chat
+B exit from chat
+A: test
+A: test
+A exit from chat
+A: test
+A: hi
+A: test
+A exit from chat
+A: bcvbcvb
+A exit from chat
+A: cxvxcvxcv
+A exit from chat
+A: test
+Now online:
+
+A exit from chat
+A: 123123
+Now online:
+
+A: 123
+A exit from chat
+B connected to chat
+You whisper to B: test
+A exit from chat

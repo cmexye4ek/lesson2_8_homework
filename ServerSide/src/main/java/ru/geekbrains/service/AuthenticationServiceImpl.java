@@ -1,5 +1,7 @@
 package ru.geekbrains.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.geekbrains.handler.ClientHandler;
 import ru.geekbrains.service.interfaces.AuthenticationService;
 
@@ -8,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AuthenticationServiceImpl implements AuthenticationService {
-
+    private static final Logger LOGGER = LogManager.getLogger(AuthenticationServiceImpl.class.getName());
     private Connection dbConnector;
     private Statement statement;
 
@@ -21,13 +23,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public void start() throws SQLException {
         dbConnector = DBConnector.getConnection();
         statement = dbConnector.createStatement();
-        System.out.println("Authentication service started");
+        LOGGER.info("Authentication service started");
     }
 
     @Override
     public void stop() {
         closeConnection();
-        System.out.println("Authentication service stopped");
+        LOGGER.info("Authentication service stopped");
     }
 
     @Override
@@ -50,7 +52,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             try {
                 statement.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.error("Authentication server error (Statement closing)", e);
             }
         }
 
@@ -58,7 +60,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             try {
                 dbConnector.close();
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.error("Authentication server error (DBConnector closing)", e);
             }
         }
     }
