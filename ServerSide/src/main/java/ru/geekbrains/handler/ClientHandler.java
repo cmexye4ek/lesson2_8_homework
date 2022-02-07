@@ -60,11 +60,11 @@ public class ClientHandler {
             if (message.startsWith("/login")) {
                 String login = message.split("-", 3)[1];
                 String password = message.split("-", 3)[2];
-                final String nick = myServer.getAuthenticationService().getNickNameByLoginAndPassword(login.trim(), password.trim());
+                String nick = myServer.getAuthenticationService().authentication(login.trim(), password.trim());
                 if (nick != null) {
                     if (!myServer.nickIsBusy(nick)) {
-                        sendMessage("/successLogin" + nick);
                         this.nickName = nick;
+                        sendMessage("/successLogin" + nickName);
                         myServer.sendMessageToClients(nickName + " connected to chat");
                         System.out.println("Client " + connectionToken.toString() + " logged in as " + nickName);
                         myServer.subscribe(this);
@@ -102,6 +102,17 @@ public class ClientHandler {
 
                 if (message.startsWith("/online")) {
                     myServer.getOnlineUsers(this);
+                }
+
+                if (message.startsWith("/changeNickname")) {
+                    String newNickName = message.split("-", 2)[1];
+                    if (!myServer.nickIsBusy(newNickName)) {
+                        myServer.getAuthenticationService().changeNickName(this, newNickName);
+                        myServer.sendMessageToClients(this.nickName + " has changed name to " + newNickName);
+                        this.nickName = newNickName;
+                    } else {
+                        sendMessage("Desired nickname is busy now");
+                    }
                 }
                 continue;
             }
@@ -153,4 +164,3 @@ public class ClientHandler {
     }
 
 }
-
