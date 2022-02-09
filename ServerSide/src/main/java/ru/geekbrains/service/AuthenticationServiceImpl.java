@@ -9,10 +9,9 @@ import java.util.List;
 
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    //        private List<UserEntity> userEntityList;
     private Connection dbConnector;
     private Statement statement;
-    private PreparedStatement preparedStatement;
+
 
     public AuthenticationServiceImpl() {
 
@@ -22,8 +21,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public void start() throws SQLException {
         dbConnector = DBConnector.getConnection();
         statement = dbConnector.createStatement();
-//        createTable();  // создание бд
-//        insertData(); // первоначальное заполнение бд
         System.out.println("Authentication service started");
     }
 
@@ -35,7 +32,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public String authentication(String login, String password) throws SQLException {
-        ResultSet credentialsSet = statement.executeQuery("SELECT * FROM users WHERE Login LIKE '" + login + "' AND Password LIKE '" + password + "'");
+        ResultSet credentialsSet = statement.executeQuery("SELECT * FROM users WHERE Login = '" + login + "' AND Password = '" + password + "'");
         if (credentialsSet.next()) {
             return credentialsSet.getString("Nickname");
         } else {
@@ -45,7 +42,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void changeNickName(ClientHandler from, String newNickName) throws SQLException {
-        statement.executeUpdate("UPDATE users SET Nickname = '" + newNickName + "' WHERE Nickname LIKE '" + from.getNickName() + "' AND Login LIKE '"+ from.getLogin() +"';");
+        statement.executeUpdate("UPDATE users SET Nickname = '" + newNickName + "' WHERE Nickname = '" + from.getNickName() + "' AND Login = '"+ from.getLogin() +"';");
     }
 
     private void closeConnection() {
@@ -56,13 +53,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 e.printStackTrace();
             }
         }
-        if (preparedStatement != null) {
-            try {
-                dbConnector.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+
         if (dbConnector != null) {
             try {
                 dbConnector.close();

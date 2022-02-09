@@ -177,7 +177,7 @@ public class MyChatClient extends JFrame {
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
-        DefaultCaret caret = (DefaultCaret)chatArea.getCaret();
+        DefaultCaret caret = (DefaultCaret) chatArea.getCaret();
         caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
 
 
@@ -286,20 +286,43 @@ public class MyChatClient extends JFrame {
     }
 
     public void loadHistory() {
-        try (BufferedReader br = new BufferedReader(new FileReader(nickName + "_ChatHistory.txt"))) {
-            List<String> lines = new ArrayList<>();
-            String str;
-            while ((str = br.readLine()) != null) {
-                lines.add(str);
-                if (lines.size() > 100) {
-                    lines.remove(0);
+//        try (BufferedReader br = new BufferedReader(new FileReader(nickName + "_ChatHistory.txt"))) {
+//            List<String> lines = new ArrayList<>();
+//            String str;
+//            while ((str = br.readLine()) != null) {
+//                lines.add(str);
+//                if (lines.size() > 100) {
+//                    lines.remove(0);
+//                }
+//            }
+//            String[] history = new String[100];    // трюк с массивом нужен только для красивого форматирования текста в окне чата. Так то можно и просто лист выводить.
+//            lines.toArray(history);
+//            for (int i = 0; i < history.length; i++) {
+//                chatArea.append(history[i] + "\n");
+//            }
+//        } catch (IOException ignore) {
+//
+//        }
+
+        try (RandomAccessFile raf = new RandomAccessFile(nickName + "_ChatHistory.txt", "r")) {
+            StringBuilder sb = new StringBuilder();
+            int lines = 100;
+            long position = raf.length() - 1;
+            raf.seek(position);
+            for (long i = position - 1; i >= 0; i--) {
+                raf.seek(i);
+                char c = (char) raf.read();
+                if (c == '\n') {
+                    lines--;
+                    if (lines == 0) {
+                        break;
+                    }
                 }
+                sb.append(c);
             }
-            String [] history = new String[100];    // трюк с массивом нужен только для красивого форматирования текста в окне чата. Так то можно и просто лист выводить.
-            lines.toArray(history);
-            for (int i = 0; i < history.length; i++) {
-                chatArea.append(history[i] + "\n");
-            }
+            sb.reverse();
+            chatArea.append(sb.toString() + "\n");
+
         } catch (IOException ignore) {
 
         }
