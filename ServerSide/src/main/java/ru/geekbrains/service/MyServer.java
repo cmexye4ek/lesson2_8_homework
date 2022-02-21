@@ -1,5 +1,8 @@
 package ru.geekbrains.service;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.geekbrains.handler.ClientHandler;
 import ru.geekbrains.service.interfaces.AuthenticationService;
 
@@ -7,32 +10,37 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class MyServer {
-
+    private static final Logger LOGGER = LogManager.getLogger(MyServer.class.getName());
+    private static final Logger LOGGER_MSG = LogManager.getLogger("messages");
     private static final Integer PORT = 8880;
 
     private AuthenticationService authenticationService;
+    private ExecutorService executorService;
     private List<ClientHandler> handlerList;
 
     public MyServer() {
-        System.out.println("Server started");
+        LOGGER.info("Server started");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             authenticationService = new AuthenticationServiceImpl();
             authenticationService.start();
             handlerList = new ArrayList<>();
+            executorService = Executors.newFixedThreadPool(10);
             while (true) {
-                System.out.println("Server waiting connection");
+                LOGGER.info("Server waiting connection");
                 Socket socket = serverSocket.accept();
-                new ClientHandler(this, socket);
-
+                new ClientHandler(this, socket, executorService);
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Socket error", e);
         } finally {
             authenticationService.stop();
+            executorService.shutdown();
         }
     }
 
@@ -47,6 +55,7 @@ public class MyServer {
             if (clientHandler.getNickName().equals(to)) {
                 clientHandler.sendMessage(from.getNickName() + " whisper you: " + message);
                 from.sendMessage("You whisper to " + to + ": " + message);
+                LOGGER_MSG.log(Level.INFO, from.getNickName() + " whisper to " + to + ": " + message);
                 return;
             }
 
@@ -58,10 +67,12 @@ public class MyServer {
 
     public synchronized void sendMessageToClients(String message) {
         handlerList.forEach(clientHandler -> clientHandler.sendMessage(message));
+        LOGGER_MSG.log(Level.INFO, message);
+
     }
 
     public synchronized void getOnlineUsers(ClientHandler clientHandler) {
-        String str = new String("Now online:\n");
+        String str = "Now online:\n";
         for (ClientHandler ch : handlerList) {
             if (ch.getNickName().equals(clientHandler.getNickName())) {
                 continue;
